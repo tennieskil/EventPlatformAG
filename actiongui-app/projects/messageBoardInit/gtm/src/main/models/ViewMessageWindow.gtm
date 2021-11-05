@@ -1,0 +1,156 @@
+Window ViewMessageWindow {
+    
+    String text := ['View Message']
+    Message msg
+
+    Label MessageTitle_L {
+        String text := ['Title: ']
+    }
+
+    Label MessageTitleContent_L{
+        String text := [$ViewMessageWindow.msg$.title]
+    }
+
+    Label MessageAuthor_L {
+        String text := ['Author: ']
+    }
+
+    Label MessageAuthorContent_L {
+        String text := [$ViewMessageWindow.msg$.messageOwner.login]
+    }
+
+    Label MessageContent_L {
+        String text := ['Content: ']
+    }
+
+    Label MessageContentContent_L {
+        String text := [$ViewMessageWindow.msg$.text]
+    }
+
+
+    Table ListOfReplies {
+        Set(Reply) rows := [$ViewMessageWindow.msg$.messageReplies]
+        Set(Reply) selected := [null]
+        columns {
+            ['Message'] : Label message {
+                event onView (text) {
+                   text := [$ListOfReplies.row$.text]
+                }
+            }
+            ['Author'] : Label authors {
+                event onView (text) {
+                   text := [$ListOfReplies.row$.replyOwner.login]
+                }
+            }    
+        }
+    }
+
+
+    Button CreateMsg_B {
+        String text := ['Create Reply']
+        event onClick {
+
+            open CreateReplyWindow(caller:[$ViewMessageWindow.caller$], role:[$ViewMessageWindow.caller$.personalRole], msg:[$ViewMessageWindow.msg$])
+
+        }
+
+    }
+
+    
+
+    Button OpenMsg_B {
+        String text := ['Open Reply']
+        Reply toOpen := [null]
+        String tempText := [null]
+
+        event onClick {
+        
+            if[$ListOfReplies.selected$->oclIsUndefined()]{
+                   notification(['Error'],['You must select one reply.'],[500])
+           }
+           else{
+                 if[$ListOfReplies.selected$->size()>1]{
+                   notification(['Error'],['You must select only one reply.'],[500])
+                  }
+                 else
+                 {
+                    toOpen := [$ListOfReplies.selected$->any(p | true)]
+                    tempText := [$toOpen$.text]
+                    reevaluate ListOfReplies.rows
+
+                    open ViewReplyWindow(caller:[$ViewMessageWindow.caller$], role:[$ViewMessageWindow.caller$.personalRole], msg:[$ViewMessageWindow.msg$], reply:[$toOpen$])
+                 
+                 }
+           }
+
+            
+
+        }
+
+    }
+
+    Button ModifyMsg_B {
+        String text := ['Modify Reply']
+        Reply toModify := [null]
+
+        event onClick {
+           if[$ListOfReplies.selected$->oclIsUndefined()]{
+                   notification(['Error'],['You must select one reply.'],[500])
+           }
+           else{
+                 if[$ListOfReplies.selected$->size()>1]{
+                   notification(['Error'],['You must select only one reply.'],[500])
+                  }
+                 else
+                 {
+                    toModify := [$ListOfReplies.selected$->any(p | true)]
+                    [$toModify$.text] := [$toModify$.text]
+                        
+                    open EditReplyWindow(caller:[$ViewMessageWindow.caller$], role:[$ViewMessageWindow.caller$.personalRole], msg:[$ViewMessageWindow.msg$], reply:[$toModify$])
+                    
+                    
+                 }
+           }
+
+           
+            
+       }
+    }
+
+    Button DeleteMsg_B {
+        String text := ['Delete Reply']
+        Reply toDelete := [null]
+
+        event onClick {
+           if[$ListOfReplies.selected$->oclIsUndefined()]{
+                   notification(['Error'],['You must select one reply.'],[500])
+           }
+           else{
+                 if[$ListOfReplies.selected$->size()>1]{
+                   notification(['Error'],['You must select only one reply.'],[500])
+                  }
+                 else
+                 {
+
+                    toDelete := [$ListOfReplies.selected$->any(p | true)]
+                    delete [$toDelete$]
+                    notification (['Success'],['The Reply has been deleted successfully.'],[500])
+                    
+                 }
+           }
+
+           toDelete := [null]
+           
+           reevaluate ListOfReplies.rows
+        }
+
+    }
+
+    Button Back_B{
+        String text := ['Back']
+
+        event onClick{
+            open MainWindow(caller:[$ViewMessageWindow.caller$], role:[$ViewMessageWindow.caller$.personalRole])
+        }
+   }
+}

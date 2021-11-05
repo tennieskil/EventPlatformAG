@@ -1,0 +1,46 @@
+Window CreateReplyWindow{
+
+    String text := ['New Reply']
+    Message msg
+
+    Label MessageContent_L {
+        String text := ['Content: ']
+    }
+
+    TextField MessageText_TF {
+//        String text := [null]
+    }
+
+   Button Publish_B {
+        String text := ['Publish it']
+        event onClick {
+            if [$MessageText_TF.text$.oclIsUndefined()] {
+               MessageText_TF.error := ['Error']
+            }
+            if [$MessageText_TF.error$ = null and $CreateReplyWindow.msg$ <> null] {
+                 newReply := new Reply
+                 [$newReply$.replyOwner] := [$CreateReplyWindow.caller$]
+                 [$newReply$.text] := [$MessageText_TF.text$]               
+
+                 
+                 [$newReply$.message] := [$CreateReplyWindow.msg$]
+                 
+                 MessageText_TF.text := [null]
+
+                 notification (['Success'],['An instance of Reply has been created successfully.'],[500])
+            }
+            else {
+                notification(['Error'],['The form contains errors. Please, check the form.'],[500]) 
+            }
+        }
+     }
+
+    Button Back_B{
+        String text := ['Back']
+
+        event onClick{
+            open ViewMessageWindow(caller:[$CreateReplyWindow.caller$], role:[$CreateReplyWindow.caller$.personalRole], msg:[$CreateReplyWindow.msg$])
+        }
+    }
+
+}

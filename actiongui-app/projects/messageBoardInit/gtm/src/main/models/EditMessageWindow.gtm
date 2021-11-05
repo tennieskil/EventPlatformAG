@@ -1,0 +1,54 @@
+Window EditMessageWindow{
+
+    String text := ['Edit Message']
+    Message msg
+
+    Label MessageTitle_L {
+        String text := ['Title: ']
+    }
+
+    TextField MessageTitle_TF {
+        String text := [$EditMessageWindow.msg$.title]
+    }
+
+    Label MessageContent_L {
+        String text := ['Content: ']
+    }
+
+
+
+    TextField MessageText_TF {
+       String text := [$EditMessageWindow.msg$.text]
+    }
+
+   Button Publish_B {
+        String text := ['Save Changes']
+        event onClick {
+            if [$MessageTitle_TF.text$.oclIsUndefined()] {
+                MessageTitle_TF.error := ['Error']
+            }
+            if [$MessageText_TF.text$.oclIsUndefined()] {
+               MessageText_TF.error := ['Error']
+            }
+            if [$MessageTitle_TF.error$ = null and $MessageText_TF.error$ = null] {
+                    [$EditMessageWindow.msg$.title] := [$MessageTitle_TF.text$]
+                    [$EditMessageWindow.msg$.text] := [$MessageText_TF.text$]
+                    notification (['Success'],['The message has been modified successfully.'],[500])
+                 
+                 
+            }
+            else {
+                notification(['Error'],['The form contains errors. Please, check the form.'],[500]) 
+            }
+        }
+     }
+
+    Button Back_B{
+        String text := ['Back']
+
+        event onClick{
+            open MainWindow(caller:[$EditMessageWindow.caller$], role:[$EditMessageWindow.caller$.personalRole])
+        }
+    }
+
+}

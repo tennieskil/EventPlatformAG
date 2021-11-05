@@ -1,0 +1,57 @@
+Window CreateMessageWindow{
+
+    String text := ['New Message']
+
+    Label MessageTitle_L {
+        String text := ['Title: ']
+    }
+
+    TextField MessageTitle_TF {
+//        String text := [null]
+    }
+
+    Label MessageContent_L {
+        String text := ['Content: ']
+    }
+
+
+
+    TextField MessageText_TF {
+//        String text := [null]
+    }
+
+   Button Publish_B {
+        String text := ['Publish it']
+        event onClick {
+            if [$MessageTitle_TF.text$.oclIsUndefined()] {
+                MessageTitle_TF.error := ['Error']
+            }
+            if [$MessageText_TF.text$.oclIsUndefined()] {
+               MessageText_TF.error := ['Error']
+            }
+            if [$MessageTitle_TF.error$ = null and $MessageText_TF.error$ = null] {
+                 newMessage := new Message
+                 [$newMessage$.messageOwner] := [$CreateMessageWindow.caller$]
+                 [$newMessage$.title] := [$MessageTitle_TF.text$]
+                 [$newMessage$.text] := [$MessageText_TF.text$]
+
+                 MessageTitle_TF.text := [null]
+                 MessageText_TF.text := [null]
+
+                 notification (['Success'],['An instance of Message has been created successfully.'],[500])
+            }
+            else {
+                notification(['Error'],['The form contains errors. Please, check the form.'],[500]) 
+            }
+        }
+     }
+
+    Button Back_B{
+        String text := ['Back']
+
+        event onClick{
+            open MainWindow(caller:[$CreateMessageWindow.caller$], role:[$CreateMessageWindow.caller$.personalRole])
+        }
+    }
+
+}

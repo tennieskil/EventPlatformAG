@@ -1,0 +1,53 @@
+Window ViewReplyWindow {
+    
+    String text := ['View Reply']
+    Message msg
+    Reply reply
+
+    Label MessageTitle_L {
+        String text := ['Message Title: ']
+    }
+
+    Label MessageTitleContent_L{
+        String text := [$ViewReplyWindow.msg$.title]
+    }
+
+    Label MessageAuthor_L { 
+        String text := ['Message Author: ']
+    }
+
+    Label MessageAuthorContent_L {
+        String text := [$ViewReplyWindow.msg$.messageOwner->any(o | true).login]
+    }
+
+    Label ReplyAuthor_L { 
+        String text := ['Reply Author: ']
+    }
+
+    Label ReplyAuthorContent_L {
+        String text := [$ViewReplyWindow.reply$.replyOwner->any(o | true).login]
+    }
+
+    Label ReplyContent_L {
+        String text := ['Reply Content: ']
+    }
+
+    Label ReplyContentContent_L {
+        String text := [$ViewReplyWindow.reply$.text]
+    }
+
+
+    
+
+
+    Button Back_B {
+        String text := ['Back']
+        event onClick {
+
+            open ViewMessageWindow(caller:[$ViewReplyWindow.caller$], role:[$ViewReplyWindow.caller$.personalRole], msg:[$ViewReplyWindow.msg$])
+
+        }
+
+    }
+
+}

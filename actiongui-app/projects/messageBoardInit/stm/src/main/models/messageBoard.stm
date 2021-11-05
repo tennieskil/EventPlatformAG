@@ -1,0 +1,24 @@
+role USER {
+    Person { 
+        fullAccess
+     }
+    Message { 
+        update(title), update(text) constrainedBy [self.messageOwner=caller]
+        delete(self) constrainedBy [self.messageOwner=caller and self.messageReplies->size()=0]
+     }
+    Reply { 
+        fullAccess
+     }
+}
+
+role SYSTEM{
+    Person { 
+        fullAccess
+     }
+    Message { 
+        fullAccess
+     }
+    Reply { 
+        fullAccess
+     }
+}

@@ -1,0 +1,196 @@
+Window MainWindow {
+    
+    String text := ['Message Board']
+    
+
+    Label Messages_L {
+        String text := ['All Messages']
+    }
+    Table ListOfMessages {
+        Set(Message) rows := [Message.allInstances()]
+        Set(Message) selected := [null]
+        columns {
+            ['Message'] : Label messages {
+                String text {
+                    if [$text$.oclIsInvalid()] {
+                        error := ['no permission']
+                    }
+                    else {
+                        error := [null]
+                    }
+                }
+                event onView (text) {
+                    text := [null]
+                    text := [$ListOfMessages.row$.title]
+                    
+                }
+            }
+       
+            
+
+
+
+
+           ['Author'] : Label authors {
+                String text{
+                   if [$text$.oclIsInvalid()] {
+                        error := ['no permission']
+                    }
+                    else {
+                        error := [null]
+                    }
+                }
+                event onView (text) {
+                    text := [null]
+                    text := [$ListOfMessages.row$.messageOwner->any(o | true).login]
+                }
+            }
+            ['Replies'] : Label replies {
+            String text {
+                    if [$text$.oclIsInvalid()] {
+                        error := ['no permission']
+                    }
+                    else {
+                        error := [null]
+                    }
+                }
+                event onView (text) {
+                    text := [null]
+                    text := [$ListOfMessages.row$.messageReplies->size().toString()]
+                }
+            }     
+        }
+    }
+
+    Button CreateMsg_B {
+        String text := ['Create Message']
+        event onClick {
+
+            open CreateMessageWindow(caller:[$MainWindow.caller$], role:[$MainWindow.caller$.personalRole])
+
+        }
+
+    }
+
+    
+
+    Button OpenMsg_B {
+        String text := ['Open Message']
+        Message toOpen := [null]
+        String tempTitle := [null]
+        String tempText := [null]
+        Person tempOwner := [null]
+        Set(Reply) tempMsgs := [null]
+
+        event onClick {
+        
+            if[$ListOfMessages.selected$->oclIsUndefined()]{
+                   notification(['Error'],['You must select one message.'],[500])
+           }
+           else{
+                 if[$ListOfMessages.selected$->size()>1]{
+                   notification(['Error'],['You must select only one message.'],[500])
+                  }
+                 else
+                 {
+                    toOpen := [$ListOfMessages.selected$->any(p | true)]
+                     
+                    
+                    //check whether we can read the message or not
+                    try{
+                        
+
+                        tempTitle := [$toOpen$.title]
+                        tempText := [$toOpen$.text]
+                        tempOwner := [$toOpen$.messageOwner]
+                        tempMsgs := [$toOpen$.messageReplies]
+
+                        reevaluate ListOfMessages.rows
+
+                        open ViewMessageWindow(caller:[$MainWindow.caller$], role:[$MainWindow.caller$.personalRole], msg:[$toOpen$])
+                    
+                    }catch(SecurityException)
+                    {
+                        notification(['Error'],['You do not have enough permissions for viewing this Message.'],[500])
+                    }
+                 }
+           }
+
+            
+
+        }
+
+    }
+
+    Button ModifyMsg_B {
+        String text := ['Modify Message']
+        Message toModify := [null]
+
+        event onClick {
+           if[$ListOfMessages.selected$->oclIsUndefined()]{
+                   notification(['Error'],['You must select one message.'],[500])
+           }
+           else{
+                 if[$ListOfMessages.selected$->size()>1]{
+                   notification(['Error'],['You must select only one message.'],[500])
+                  }
+                 else
+                 {
+                   toModify := [$ListOfMessages.selected$->any(p | true)]
+
+                   //check whether we can actually read and modify this message
+                   try{
+                        [$toModify$.title] := [$toModify$.title]
+                        [$toModify$.text] := [$toModify$.text]
+                        
+
+                        reevaluate ListOfMessages.rows
+
+                        open EditMessageWindow(caller:[$MainWindow.caller$], role:[$MainWindow.caller$.personalRole], msg:[$toModify$])
+                    
+                    }catch(SecurityException)
+                    {
+                        notification(['Error'],['You do not have enough permissions for editing this Message.'],[500])
+                    }
+                 }
+           }
+
+           
+           
+       }
+    }
+
+    Button DeleteMsg_B {
+        String text := ['Delete Message']
+        Message toDelete := [null]
+
+        event onClick {
+           if[$ListOfMessages.selected$->oclIsUndefined()]{
+                   notification(['Error'],['You must select one message.'],[500])
+           }
+           else{
+                 if[$ListOfMessages.selected$->size()>1]{
+                   notification(['Error'],['You must select only one message.'],[500])
+                  }
+                 else
+                 {
+                    
+                    toDelete := [$ListOfMessages.selected$->any(p | true)]
+                    try{
+                        delete [$toDelete$]
+                        notification (['Success'],['The Message has been deleted successfully.'],[500])
+                    }
+                    catch(SecurityException)
+                    {
+                       notification(['Error'],['You do not have enough permissions for deleting this Message.'],[500])
+                    }
+                 }
+           }
+
+           toDelete := [null]
+           
+           reevaluate ListOfMessages.rows
+          }
+    }
+
+}

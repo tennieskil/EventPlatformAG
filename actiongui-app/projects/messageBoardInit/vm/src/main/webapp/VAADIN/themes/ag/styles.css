@@ -1,0 +1,20 @@
+@import "../reindeer/legacy-styles.css";
+
+@import "ViewReplyWindow.css";
+@import "CreateReplyWindow.css";
+@import "MainWindow.css";
+@import "CreateMessageWindow.css";
+@import "ViewMessageWindow.css";
+@import "LoginWindow.css";
+@import "EditReplyWindow.css";
+@import "EditMessageWindow.css";
+
+/* The following rule is to avoid resizeable text fields */
+.v-textarea {
+    resize: none
+}
+
+/* The following rule is to avoid problems when a text field is higher than their standard value*/
+.v-textfield {
+    background-image: none;
+}

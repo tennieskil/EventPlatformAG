@@ -1,0 +1,27 @@
+entity Person {
+    String login
+    String password 
+    Role personalRole
+    Set(Message) messages oppositeTo messageOwner
+    Set(Reply) replies oppositeTo replyOwner
+}
+
+
+entity Message {
+    String title
+    String text 
+    Person messageOwner oppositeTo messages
+    Set(Reply) messageReplies oppositeTo message
+}
+
+entity Reply {
+    String text 
+    Person replyOwner oppositeTo replies
+    Message message oppositeTo messageReplies
+}
+
+enum Role {
+    USER
+    // MODERATOR
+    SYSTEM
+}

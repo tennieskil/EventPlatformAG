@@ -1,0 +1,43 @@
+Window EditReplyWindow{
+
+    String text := ['Edit Reply']
+    Message msg
+    Reply reply
+    
+
+    Label MessageContent_L {
+        String text := ['Content: ']
+    }
+
+    TextField MessageText_TF {
+        String text := [$EditReplyWindow.reply$.text]
+    }
+
+   Button Publish_B {
+        String text := ['Save Changes']
+        event onClick {
+           
+            if [$MessageText_TF.text$.oclIsUndefined()] {
+               MessageText_TF.error := ['Error']
+            }
+            if [ $MessageText_TF.error$ = null and $EditReplyWindow.reply$ <> null and  $EditReplyWindow.msg$ <> null] {           
+
+                    [$EditReplyWindow.reply$.text] := [$MessageText_TF.text$]
+                    notification (['Success'],['The reply has been modified successfully.'],[500])
+           
+            }
+            else {
+                notification(['Error'],['The form contains errors. Please, check the form.'],[500]) 
+            }
+        }
+     }
+
+    Button Back_B{
+        String text := ['Back']
+
+        event onClick{
+            open ViewMessageWindow(caller:[$EditReplyWindow.caller$], role:[$EditReplyWindow.caller$.personalRole], msg:[$EditReplyWindow.msg$])
+        }
+    }
+
+}
