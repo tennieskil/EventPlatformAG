@@ -51,7 +51,7 @@ role FREEUSER {
     update(title), update(description), update(location), update(date) constrainedBy [self.managedBy->includes(caller) or self.owner=null]
     update(private) constrainedBy [self.private=null and value=false and (self.owner=caller or self.owner=null)]
 
-    read(attendants), read(managedBy) constrainedBy [(not self.private) or (self.attendants->includes(caller)) or (self.invitations->select(i | i.invitee=caller)->size()>0)]
+    read(attendants), read(managedBy), read(requesters) constrainedBy [(not self.private) or (self.attendants->includes(caller)) or (self.invitations->select(i | i.invitee=caller)->size()>0)]
 
     add(managedBy) constrainedBy [caller=self.owner and (self.attendants->includes(target) or target=self.owner)]
     remove(managedBy) constrainedBy [(caller=self.owner) and (self.managedBy->includes(target))]
@@ -60,7 +60,7 @@ role FREEUSER {
     add(attendants) constrainedBy [(self.managedBy->includes(caller) and (self.requesters->includes(target) or self.owner=target)) or ((self.invitations->select(i | i.invitee=caller)->size()>0) and (target=caller)) or (self.owner=null and target=caller)]
   
     add(requesters) constrainedBy [(not self.private) and (caller=target)]
-    remove(requesters) constrainedBy [(caller=target) and (self.requesters->includes(target))]
+    remove(requesters) constrainedBy [((caller=target) or self.managedBy->includes(caller)) and (self.requesters->includes(target))]
 
     add(invitations) constrainedBy [(self.managedBy->includes(caller))]
     remove(invitations) constrainedBy [(self.managedBy->includes(caller)) or ((self.invitations->includes(target)) and caller=target.invitee)]
@@ -84,27 +84,35 @@ role FREEUSER {
     update(event) constrainedBy [self.event=null and value.managedBy->includes(caller)]
     update(invitee) constrainedBy [self.invitee=null and self.event.managedBy->includes(caller)]
     update(invitedBy) constrainedBy [self.invitedBy=null and self.event.managedBy->includes(caller) and value=caller]
+    delete constrainedBy [self.invitee = caller or self.event.managedBy->includes(caller)]
   }
 
   Post {
     create
     read(author), read(content), read(postedAt) constrainedBy [self.postedAt.attendants->includes(caller) and (not self.locked)]
-    update(flagged) constrainedBy [self.postedAt.attendants->includes(caller) and value=true and (not self.locked)]
-    update(author) constrainedBy [self.author=null and value=caller and (not self.locked)]
-    update(content) constrainedBy [self.content=null and self.author=caller and (not self.locked)]
-    update(postedAt) constrainedBy [self.postedAt=null and self.author=caller and value.attendants->includes(caller) and (not self.locked)]
+    update(flagged) constrainedBy [(self.postedAt.attendants->includes(caller) or self.postedAt=null) and (value=true or self.flagged = null) and ((not self.locked) or self.locked = null)]
+    update(locked) constrainedBy [self.locked = null and value = false]
+    update(author) constrainedBy [self.author=null and value=caller and ((not self.locked) or self.locked = null)]
+    update(content) constrainedBy [self.content=null and self.author=caller and ((not self.locked) or self.locked = null)]
+    update(postedAt) constrainedBy [self.postedAt=null and self.author=caller and value.attendants->includes(caller) and ((not self.locked) or self.locked = null)]
     delete constrainedBy [(self.author=caller or self.postedAt.managedBy->includes(caller)) and (not self.locked)]
   }
 }
 
 role PREMIUMUSER extends FREEUSER {
   Person {
+    read(subscriptions) constrainedBy [self=caller]
     add(subscriptions) constrainedBy [self=caller]
     remove(subscriptions) constrainedBy [self=caller and self.subscriptions->includes(target)]
   }
 
   Event {
     update(private) constrainedBy [self.private=null and self.owner=caller]
+  }
+
+  Category{
+    add(subscribers) constrainedBy [target = caller]
+    remove(subscribers) constrainedBy [target = caller]
   }
 }
 
@@ -155,6 +163,7 @@ role ADMIN extends MODERATOR{
     create
     delete
     update(name)
+    read(subscribers)
     remove(events) constrainedBy [target.categories->includes(self)]
     add(moderators) constrainedBy [target.role=Role::MODERATOR]
     remove(moderators) constrainedBy [self.moderators->includes(target)]
