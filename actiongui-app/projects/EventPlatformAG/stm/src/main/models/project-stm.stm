@@ -2,9 +2,9 @@ role NONE {
   Person {
     create
     read(username), read(password), read(role)
-    update(username) constrainedBy [self.username=null and self=caller]
-    update(password) constrainedBy [self.password=null and self=caller]
-    update(role) constrainedBy [self.role=null and self=caller and value=Role::FREEUSER]
+    update(username) constrainedBy [self.username=null]
+    update(password) constrainedBy [self.password=null]
+    update(role) constrainedBy [self.role=null and value=Role::FREEUSER]
     read(moderates)
   }
 
@@ -23,13 +23,15 @@ role FREEUSER {
   Person {
     read(name), read(surname), read(username), read(role), read(moderates)
     update(name), update(surname), update(username), update(password) constrainedBy [self=caller]
-    read(events), read(manages), read(attends), read(requests), read(invitations), read(invites) constrainedBy [self=caller]
+    read(events), read(manages), read(attends), read(requests), read(invitations), read(invites), read(authored) constrainedBy [self=caller]
     add(attends) constrainedBy [(target.managedBy->includes(caller) and (self.requests->includes(target) or self=target.owner)) or (self=caller and (self.invitations->select(i | i.event=target)->size() > 0 or target.owner=null))]
     remove(attends) constrainedBy [(target.managedBy->includes(caller) and target.managedBy->excludes(self) and self.attends->includes(target)) or (caller <> target.owner and caller=self and self.attends->includes(target))]
     add(manages) constrainedBy [(target.owner=caller and (target.attendants->includes(self) or self=target.owner)) or (target.owner=null and caller=self)]
     remove(manages) constrainedBy [(target.owner=caller and target.managedBy->includes(self) and self <> target.owner) or (target.owner=null and caller=self)]
     add(events) constrainedBy [self=caller and (target.owner=self or target.owner=null)]
     remove(events) constrainedBy [self=caller and (target.owner=self or target.owner=null)]
+    add(authored) constrainedBy [(target.author = caller or target.author = null) and caller = self]
+    remove(authored) constrainedBy [caller = self and target.author = caller and (not target.locked)]
 
     add(requests) constrainedBy [self=caller and (not target.private)]
     remove(requests) constrainedBy [self=caller and self.requests->includes(target)]
@@ -140,6 +142,7 @@ role ADMIN extends MODERATOR{
     update(password), update(role) constrainedBy [self.role <> Role::ADMIN or self=caller]
     add(moderates) constrainedBy [self.role=Role::MODERATOR]
     remove(moderates) constrainedBy [self.moderates->includes(target)]
+    remove(authored)
   }
 
   Event {
