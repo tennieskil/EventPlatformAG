@@ -156,7 +156,7 @@ role ADMIN extends MODERATOR{
   }
 
   Event {
-    read(messageBoard)
+    read
     add(messageBoard)
     remove(categories) constrainedBy [self.categories->includes(target)]
   }
