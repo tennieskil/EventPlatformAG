@@ -49,7 +49,7 @@ role FREEUSER {
 
     update(owner) constrainedBy [self.owner=null and caller=value]
     update(title), update(description), update(location), update(date) constrainedBy [self.managedBy->includes(caller) or self.owner=null or self.owner=caller]
-    update(private) constrainedBy [value=false and (self.owner=caller or self.owner=null)]
+    update(private) constrainedBy [value=false and (self.managedBy->includes(caller) or self.owner=caller or self.owner=null)]
 
     read(attendants), read(managedBy), read(requesters) constrainedBy [(not self.private) or (self.attendants->includes(caller)) or (self.invitations->select(i | i.invitee=caller)->size()>0)]
 
@@ -90,10 +90,10 @@ role FREEUSER {
 
   Post {
     create
-    read(author), read(content), read(postedAt) constrainedBy [self.postedAt.attendants->includes(caller) and (not self.locked)]
-    read(locked), read(flagged) constrainedBy [self.postedAt.managedBy->includes(caller)]
-    update(flagged) constrainedBy [(self.postedAt.attendants->includes(caller) or self.postedAt=null) and (value=true or self.flagged = null) and ((not self.locked) or self.locked = null)]
-    update(locked) constrainedBy [self.locked=null and value=false]
+    read(author), read(content), read(postedAt) constrainedBy [(self.postedAt.attendants->includes(caller) and (not self.locked)) or (self.postedAt.managedBy->includes(caller) or self.postedAt.owner=caller)]
+    read(locked), read(flagged) constrainedBy [self.postedAt.managedBy->includes(caller) or self.postedAt.owner=caller]
+    update(flagged) constrainedBy [(((self.postedAt.attendants->includes(caller) or self.postedAt=null) and (value=true or self.flagged = null)) or (self.postedAt.managedBy->includes(caller) or self.postedAt.owner=caller)) and ((not self.locked) or self.locked = null)]
+    update(locked) constrainedBy [(self.locked=null and value=false) or ((self.postedAt.managedBy->includes(caller) or self.postedAt.owner=caller) and value=true)]
     update(author) constrainedBy [self.author=null and value=caller and ((not self.locked) or self.locked = null)]
     update(content) constrainedBy [self.content=null and self.author=caller and ((not self.locked) or self.locked = null)]
     update(postedAt) constrainedBy [self.postedAt=null and self.author=caller and value.attendants->includes(caller) and ((not self.locked) or self.locked = null)]
@@ -172,7 +172,7 @@ role ADMIN extends MODERATOR{
   }
 
   Post {
-    read(postedAt), read(author), read(content), read(flagged), read(locked)
+    read
     update(flagged), update(postedAt), update(locked)
     delete
   }
